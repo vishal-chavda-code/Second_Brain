@@ -22,9 +22,9 @@ class NotionBrain:
         if tags:
             properties["Tags"] = {"multi_select": [{"name": tag} for tag in tags]}
         
-        # Only add Follow Up if date provided (will be ignored if property doesn't exist in Notion)
+        # Only add Follow up if date provided (exact name from Notion: lowercase 'u')
         if follow_up_date:
-            properties["Follow Up"] = {"date": {"start": follow_up_date}}
+            properties["Follow up"] = {"date": {"start": follow_up_date}}
 
         # Create page with content
         children = [
@@ -45,10 +45,10 @@ class NotionBrain:
             )
             return response
         except Exception as e:
-            # If Follow Up field doesn't exist, try without it
-            if "Follow Up" in str(e) and "Follow Up" in properties:
-                print(f"   ⚠️  Follow Up field not found in Notion, saving without it...")
-                properties.pop("Follow Up", None)
+            # If Follow up field doesn't exist, try without it
+            if "Follow up" in str(e) and "Follow up" in properties:
+                print(f"   ⚠️  Follow up field not found in Notion, saving without it...")
+                properties.pop("Follow up", None)
                 response = self.client.pages.create(
                     parent={"database_id": self.database_id},
                     properties=properties,
