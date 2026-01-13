@@ -113,12 +113,14 @@ def handle_capture(text: str, user_name: str, say):
         print(f"   Saving to Notion: {title}")
         
         # Try AI categorization, but don't fail if rate limited
+        follow_up = None
         try:
             ai_analysis = ai.categorize_note(content)
             title_prompt = f"Generate a short, descriptive title (max 6 words) for this note: {content}"
             title = ai.process(title_prompt).strip('"').strip("'").strip()
             tags = ai_analysis.get("tags", [])
-            print(f"   AI title: {title}, tags: {tags}")
+            follow_up = ai_analysis.get("follow_up_date")
+            print(f"   AI title: {title}, tags: {tags}, follow_up: {follow_up}")
         except Exception as ai_error:
             print(f"   AI error (using fallback): {ai_error}")
         
@@ -127,7 +129,8 @@ def handle_capture(text: str, user_name: str, say):
             title=title,
             content=content,
             tags=tags,
-            source="slack"
+            source="slack",
+            follow_up_date=follow_up
         )
         
         print(f"   ✅ Saved to Notion! Page ID: {result.get('id')}")
@@ -231,12 +234,14 @@ def handle_auto_capture(text: str, user_name: str, say):
         print(f"   Saving to Notion...")
         
         # Try AI only if available
+        follow_up = None
         try:
             ai_analysis = ai.categorize_note(text)
             title_prompt = f"Generate a short, descriptive title (max 6 words) for this note: {text}"
             title = ai.process(title_prompt).strip('"').strip("'").strip()
             tags = ai_analysis.get("tags", [])
-            print(f"   AI title: {title}, tags: {tags}")
+            follow_up = ai_analysis.get("follow_up_date")
+            print(f"   AI title: {title}, tags: {tags}, follow_up: {follow_up}")
         except Exception as ai_err:
             print(f"   AI skipped (using simple title): {ai_err}")
         
@@ -245,7 +250,8 @@ def handle_auto_capture(text: str, user_name: str, say):
             title=title,
             content=text,
             tags=tags,
-            source="slack-auto"
+            source="slack-auto",
+            follow_up_date=follow_up
         )
         
         print(f"   ✅ Saved to Notion! Page ID: {result.get('id')}")

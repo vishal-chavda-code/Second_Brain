@@ -66,11 +66,14 @@ Provide:
         return self.process(prompt)
 
     def categorize_note(self, note_content: str) -> dict:
-        """Suggest categories/tags for a note"""
+        """Suggest categories/tags for a note and extract follow-up date if present"""
+        from datetime import datetime, timedelta
+        
         prompt = f"""Analyze this note and suggest:
 1. 2-3 relevant tags/categories
 2. A priority level (high/medium/low)
 3. Is it actionable? (yes/no)
+4. Follow-up date (extract if mentioned - like "tomorrow", "next week", "on Friday", etc. Today is {datetime.now().strftime('%Y-%m-%d, %A')}. Return date in YYYY-MM-DD format or "none")
 
 Note content:
 {note_content}
@@ -78,12 +81,13 @@ Note content:
 Respond in this exact format:
 Tags: tag1, tag2, tag3
 Priority: medium
-Actionable: yes"""
+Actionable: yes
+FollowUp: 2026-01-15"""
 
         response = self.process(prompt)
         
         # Parse response
-        result = {"tags": [], "priority": "medium", "actionable": False}
+        result = {"tags": [], "priority": "medium", "actionable": False, "follow_up_date": None}
         for line in response.split("\n"):
             if line.startswith("Tags:"):
                 result["tags"] = [t.strip() for t in line.replace("Tags:", "").split(",")]
@@ -91,6 +95,10 @@ Actionable: yes"""
                 result["priority"] = line.replace("Priority:", "").strip().lower()
             elif line.startswith("Actionable:"):
                 result["actionable"] = "yes" in line.lower()
+            elif line.startswith("FollowUp:"):
+                date_str = line.replace("FollowUp:", "").strip()
+                if date_str and date_str.lower() != "none":
+                    result["follow_up_date"] = date_str
         
         return result
 
