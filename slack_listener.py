@@ -4,6 +4,7 @@ Run this script to start listening to Slack messages 24/7
 """
 import os
 import re
+import time
 import threading
 from flask import Flask
 from slack_bolt import App
@@ -22,6 +23,10 @@ flask_app = Flask(__name__)
 @flask_app.route('/')
 def health_check():
     return {'status': 'healthy', 'service': 'second-brain-bot'}, 200
+
+@flask_app.route('/health')
+def health():
+    return 'OK', 200
 
 # Initialize components
 notion = NotionBrain()
@@ -330,6 +335,20 @@ def main():
     print("🧠 SECOND BRAIN - Slack Listener")
     print("=" * 50)
     print("\n✅ Bot is starting...")
+    
+    # Start Flask health check server in background thread FIRST
+    port = int(os.getenv("PORT", 8080))
+    
+    def run_flask():
+        flask_app.run(host='0.0.0.0', port=port, debug=False, use_reloader=False, threaded=True)
+    
+    flask_thread = threading.Thread(target=run_flask, daemon=True)
+    flask_thread.start()
+    
+    # Give Flask time to start accepting connections
+    time.sleep(2)
+    print(f"✅ Health check server running on port {port}")
+    
     print("📡 Listening for Slack messages...")
     print("\nCommands:")
     print("  capture: <text>  - Save a note")
@@ -339,16 +358,6 @@ def main():
     print("\n💡 All messages are auto-captured by default!")
     print("=" * 50)
     print("\nPress Ctrl+C to stop\n")
-    
-    # Start Flask health check server in background thread
-    port = int(os.getenv("PORT", 8080))
-    
-    def run_flask():
-        flask_app.run(host='0.0.0.0', port=port, debug=False, use_reloader=False)
-    
-    flask_thread = threading.Thread(target=run_flask, daemon=True)
-    flask_thread.start()
-    print(f"✅ Health check server running on port {port}")
     
     # Check if we have Socket Mode token
     app_token = os.getenv("SLACK_APP_TOKEN")
