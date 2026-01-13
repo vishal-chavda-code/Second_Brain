@@ -22,6 +22,7 @@ class NotionBrain:
         if tags:
             properties["Tags"] = {"multi_select": [{"name": tag} for tag in tags]}
         
+        # Only add Follow Up if date provided (will be ignored if property doesn't exist in Notion)
         if follow_up_date:
             properties["Follow Up"] = {"date": {"start": follow_up_date}}
 
@@ -36,12 +37,26 @@ class NotionBrain:
             }
         ]
 
-        response = self.client.pages.create(
-            parent={"database_id": self.database_id},
-            properties=properties,
-            children=children
-        )
-        return response
+        try:
+            response = self.client.pages.create(
+                parent={"database_id": self.database_id},
+                properties=properties,
+                children=children
+            )
+            return response
+        except Exception as e:
+            # If Follow Up field doesn't exist, try without it
+            if "Follow Up" in str(e) and "Follow Up" in properties:
+                print(f"   ⚠️  Follow Up field not found in Notion, saving without it...")
+                properties.pop("Follow Up", None)
+                response = self.client.pages.create(
+                    parent={"database_id": self.database_id},
+                    properties=properties,
+                    children=children
+                )
+                return response
+            else:
+                raise  # Re-raise if it's a different error
 
     def query_notes(self, filter_dict: dict = None, limit: int = 10):
         """Query notes from the Second Brain database"""
