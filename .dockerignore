@@ -1,0 +1,15 @@
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+.git/
+.gitignore
+*.md
+test_*.py
+second_brain.py
+setup_autostart.ps1
+start_second_brain_hidden.ps1
+stop_second_brain.ps1
+start_second_brain.bat
