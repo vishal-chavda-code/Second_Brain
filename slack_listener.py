@@ -42,6 +42,19 @@ processed_messages = set()
 
 @app.event("message")
 def handle_message(event, say, client):
+    """Handle all incoming Slack messages with comprehensive error handling"""
+    try:
+        _handle_message_internal(event, say, client)
+    except Exception as e:
+        print(f"❌ Critical message handler error: {e}")
+        import traceback
+        traceback.print_exc()
+        try:
+            say(f"❌ An unexpected error occurred: {str(e)}")
+        except:
+            pass
+
+def _handle_message_internal(event, say, client):
     """Handle all incoming messages"""
     print(f"📨 Received message: {event}")
     
@@ -266,6 +279,11 @@ def handle_auto_capture(text: str, user_name: str, say):
         print(f"   ❌ Auto-capture error: {e}")
         import traceback
         traceback.print_exc()
+        # Notify user of error
+        try:
+            say(f"❌ Error auto-capturing message: {str(e)}")
+        except:
+            pass  # Don't fail if Slack notification fails
 
 
 def handle_help(say):
